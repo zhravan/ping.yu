@@ -4,132 +4,218 @@
 
 > Know when the internet gets weird.
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https%3A%2F%2Fgithub.com%2Fzhravan%2Fping.yu)
+ping.yu is a lightweight global HTTP monitoring service built on Cloudflare Workers. It tells you not only whether an endpoint is failing, but **where** latency or failures are happening.
 
-Deploy your own instance to Cloudflare in a few clicks. Cloudflare will clone the project into your GitHub account, provision the required Workers resources, and configure deployment for you.
+## Features
 
-## Why ping.yu?
+- HTTP(S) endpoint monitoring
+- Multiple monitored endpoints per account
+- Global probe measurements through Globalping
+- Regional latency visibility
+- DNS, TCP, TLS, TTFB, download, and total timing
+- ASN and network information
+- Regional latency baselines
+- Anomaly detection
+- Responsive desktop and mobile UI
+- Private, per-user monitoring spaces
 
-Traditional uptime monitoring tells you that a service is down.
+## How it works
 
-ping.yu is designed to show **where** it is slow or failing:
+~~~text
+Browser
+   |
+   v
+Cloudflare Worker
+   |
+   +-- Better Auth
+   |      |
+   |      +-- D1 users / sessions / accounts
+   |
+   +-- D1
+   |      |
+   |      +-- User-owned monitors
+   |      +-- Measurements
+   |      +-- Regional results
+   |
+   +-- Cloudflare Queue
+   |      |
+   |      v
+   |   Measurement worker
+   |      |
+   |      v
+   |   Globalping
+   |      |
+   |      v
+   |   Global probes
+   |
+   +-- React + Vite UI
+~~~
 
-- HTTP(S) monitoring
-- Multiple endpoints
-- Global probe measurements
-- Regional latency
-- DNS, TCP, TLS, TTFB and total timing
-- ASN / network visibility
-- Regional baselines and anomaly signals
-- Desktop + mobile monitoring UI
-- Per-user monitoring spaces
-
-Probe locations come from the measurement provider. ping.yu does not treat a Cloudflare Worker execution location as a fake "Bengaluru", "Tokyo", or "New York" probe.
+Probe locations come from the measurement provider. ping.yu does not use the Cloudflare Worker execution location as a substitute for a real probe location.
 
 ## Authentication
 
-ping.yu uses Better Auth with Cloudflare D1 for simple email/password accounts.
+ping.yu uses [Better Auth](https://www.better-auth.com/) with Cloudflare D1.
 
-Each monitor belongs to the authenticated user who created it. Monitor list, detail, create, and delete operations are scoped to the current session.
+Users can:
 
-### Local setup
+- Create an account with email and password
+- Sign in and sign out
+- Create multiple monitors
+- Access only their own monitors
+- Delete their own monitors
 
-Create `.dev.vars` from the example:
+Monitor API operations are scoped to the authenticated user's session.
 
-NaN
-NaN
-NaN
+### Local development
 
-Generate a high-entropy secret and put it in `BETTER_AUTH_SECRET`:
+Install dependencies:
 
-NaN
-NaN
-NaN
+~~~bash
+npm install
+~~~
 
-Then run:
+Create a local environment file:
 
-NaN
-NaN
-NaN
-NaN
+~~~bash
+cp .dev.vars.example .dev.vars
+~~~
 
-### Production
+Generate a random secret:
 
-Set the Better Auth secret as a Cloudflare secret:
+~~~bash
+openssl rand -base64 32
+~~~
 
-NaN
-NaN
-NaN
+Put the generated value in `BETTER_AUTH_SECRET` and set:
 
-Set `BETTER_AUTH_URL` to the public URL of the Worker deployment.
+~~~env
+BETTER_AUTH_SECRET=your-generated-secret
+BETTER_AUTH_URL=http://localhost:5173
+~~~
 
-## Status
+Then start the development server:
 
-ping.yu is under active development. The current focus is making the core monitoring experience reliable, simple, and easy to extend.
+~~~bash
+npm run dev
+~~~
 
-## Stack
+### Production configuration
 
-- Cloudflare Workers
-- Cloudflare D1
-- Cloudflare Queues
-- React + Vite
-- Better Auth
-- Globalping
-- TypeScript
+Configure the Better Auth secret as a Cloudflare Worker secret:
 
-## Run locally
+~~~bash
+npx wrangler secret put BETTER_AUTH_SECRET
+~~~
 
-NaN
-NaN
-NaN
-NaN
+Set `BETTER_AUTH_URL` to the public URL of your deployed Worker.
 
-Check everything before opening a PR:
+Do not commit `.dev.vars` or production secrets to Git.
 
-NaN
-NaN
-NaN
-NaN
-NaN
+## Development
 
-## Deploy
+Run the application locally:
 
-### One click
+~~~bash
+npm install
+npm run dev
+~~~
 
-Use the **Deploy to Cloudflare** button above.
+Before opening a pull request, run:
 
-The project is configured for Cloudflare resource provisioning, including its D1 database and Queue. Database migrations are applied as part of the deploy command.
+~~~bash
+npm run typecheck
+npm test
+npm run build
+~~~
 
-After provisioning, configure `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` before using account features.
+## Deployment
 
-### CLI
+### Deploy to Cloudflare
 
-NaN
-NaN
-NaN
-NaN
-NaN
+The project is configured for Cloudflare Workers, D1, Queues, and static assets.
 
-## Architecture
+For an existing Cloudflare account:
 
-NaN
-NaN
-NaN
-NaN
-NaN
-NaN
-NaN
-NaN
-NaN
-NaN
-NaN
-NaN
-NaN
-NaN
-NaN
-NaN
-NaN
-NaN
+~~~bash
+npm install
+npx wrangler login
+npm run deploy
+~~~
+
+The deploy script:
+
+1. Builds the React application.
+2. Deploys the Worker.
+3. Applies the D1 migrations remotely.
+
+After deployment, configure:
+
+- `BETTER_AUTH_SECRET`
+- `BETTER_AUTH_URL`
+
+### One-click deployment
+
+The Deploy to Cloudflare button above can be used to create your own deployment from this repository.
+
+## Database
+
+The application uses Cloudflare D1.
+
+The main data model is:
+
+~~~text
+user
+  |
+  +-- session
+  |
+  +-- account
+  |
+  +-- monitors
+        |
+        +-- global_measurements
+        |
+        +-- regional_results
+~~~
+
+Monitor ownership is represented by `monitors.user_id`.
+
+The authentication migration creates the Better Auth tables and adds the monitor ownership column.
+
+## Project structure
+
+~~~text
+.
+├── src/
+│   └── ui/
+│       ├── components/
+│       │   ├── AuthView.tsx
+│       │   ├── Header.tsx
+│       │   ├── MonitorDetail.tsx
+│       │   ├── MonitorList.tsx
+│       │   └── RegionTable.tsx
+│       ├── App.tsx
+│       ├── auth.ts
+│       └── styles.css
+├── worker/
+│   ├── api.ts
+│   ├── auth.ts
+│   ├── db.ts
+│   ├── globalping.ts
+│   ├── index.ts
+│   ├── measurements.ts
+│   └── types.ts
+├── migrations/
+├── tests/
+├── wrangler.jsonc
+└── package.json
+~~~
+
+## Current status
+
+ping.yu is under active development.
+
+The current focus is building a reliable monitoring core that can evolve from public global probes into a broader observability platform, including private-service monitoring and dedicated monitoring agents.
 
 ## Contributing
 
@@ -139,11 +225,11 @@ For larger changes, open an issue first. For small fixes, a focused pull request
 
 Please keep changes:
 
-- small and reviewable
-- tested
-- consistent with the existing UI and API
-- free of unnecessary dependencies
+- Small and reviewable
+- Tested
+- Consistent with the existing architecture and UI
+- Free of unnecessary dependencies
 
 ## License
 
-Apache License 2.0 — see [LICENSE](./LICENSE).
+Apache License 2.0. See [LICENSE](./LICENSE).
