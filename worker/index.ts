@@ -60,8 +60,13 @@ export default{
       if(!["http:","https:"].includes(parsed.protocol))return json({error:"only http and https are supported"},400);if(parsed.username||parsed.password)return json({error:"credentials in URLs are not supported"},400);
       const monitor:Monitor={id:crypto.randomUUID(),url:parsed.toString(),name:input.name?.trim()||null,interval_seconds:300,active:1,created_at:new Date().toISOString()};
       await env.DB.prepare("INSERT INTO monitors (id,url,name,interval_seconds,active,created_at) VALUES (?,?,?,?,?,?)").bind(monitor.id,monitor.url,monitor.name,monitor.interval_seconds,monitor.active,monitor.created_at).run();
-      try{await startMeasurement(env,monitor)}catch(error){await env.DB.prepare("DELETE FROM monitors WHERE id=?1").bind(monitor.id).run();return json({error:"global measurement could not start",detail:String(error)},502)}
-      return json({monitor},{status:201});
+      try {
+        await env.PROBE_QUEUE.send({monitorId:monitor.id},{contentType:"json"});
+      } catch (error) {
+        await env.DB.prepare("DELETE FROM monitors WHERE id=?1").bind(monitor.id).run();
+        return json({error:"monitor could not be queued",detail:String(error)},502);
+      }
+      return json({monitor,status:"pending"},201);
     }
     const recent=url.pathname.match(/^\/api\/monitors\/([^/]+)\/recent$/);if(recent&&request.method==="GET"){const d=await detail(env,recent[1]);return d?json(d):json({error:"monitor not found"},404)}
     const remove=url.pathname.match(/^\/api\/monitors\/([^/]+)$/);if(remove&&request.method==="DELETE"){await env.DB.prepare("DELETE FROM monitors WHERE id=?1").bind(remove[1]).run();return new Response(null,{status:204})}
