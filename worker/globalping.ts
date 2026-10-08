@@ -1,88 +1,52 @@
 const GLOBALPING_API = "https://api.globalping.io/v1";
 
 export const GLOBAL_REGIONS = [
-  { key: "IN", label: "India", city: "Bengaluru" },
-  { key: "SEAS", label: "Southeast Asia", city: "Singapore" },
-  { key: "NEAS", label: "Northeast Asia", city: "Tokyo" },
-  { key: "WEU", label: "Western Europe", city: "London" },
-  { key: "EEU", label: "Eastern Europe", city: "Warsaw" },
-  { key: "ENAM", label: "Eastern North America", city: "New York" },
-  { key: "WNAM", label: "Western North America", city: "San Francisco" },
-  { key: "NSAM", label: "Northern South America", city: "Bogota" },
-  { key: "SSAM", label: "Southern South America", city: "Sao Paulo" },
-  { key: "ME", label: "Middle East", city: "Dubai" },
-  { key: "NAF", label: "Northern Africa", city: "Cairo" },
-  { key: "SAF", label: "Southern Africa", city: "Johannesburg" },
-  { key: "OC", label: "Oceania", city: "Sydney" },
+  "Northern Africa","Eastern Africa","Middle Africa","Southern Africa","Western Africa",
+  "Caribbean","Central America","South America","Northern America",
+  "Central Asia","Eastern Asia","South-eastern Asia","Southern Asia","Western Asia",
+  "Eastern Europe","Northern Europe","Southern Europe","Western Europe",
+  "Australia and New Zealand","Melanesia","Micronesia","Polynesia",
 ] as const;
 
-type ProviderResult = {
-  probe?: {
-    continent?: string;
-    region?: string;
-    country?: string;
-    city?: string;
-    asn?: number;
-    network?: string;
-  };
-  result?: {
-    status?: string;
-    statusCode?: number;
-    resolvedAddress?: string;
-    timings?: {
-      total?: number;
-      dns?: number;
-      tcp?: number;
-      tls?: number;
-      firstByte?: number;
-      download?: number;
-    };
-  };
+type Probe = { continent:string; region:string; country:string; state:string|null; city:string; asn:number; network:string; latitude:number; longitude:number };
+type HttpResult = { status:string; statusCode?:number; statusCodeName?:string; resolvedAddress?:string|null;
+  timings?:{ total?:number; dns?:number|null; tcp?:number; tls?:number|null; firstByte?:number; download?:number };
+  tls?:{ authorized?:boolean; protocol?:string; cipherName?:string; expiresAt?:string; subject?:{CN?:string}; issuer?:{CN?:string} }|null };
+
+export type GlobalMeasurement = { id:string; type:"http"; status:"in-progress"|"finished"; createdAt:string; updatedAt:string; probesCount:number;
+  results:Array<{probe:Probe; result:HttpResult & {failureSource?:string}}>;
 };
 
-export type GlobalMeasurement = {
-  id: string;
-  status: "in-progress" | "finished" | "failed";
-  results: ProviderResult[];
-};
-
-async function request(path: string, init?: RequestInit) {
-  const response = await fetch(GLOBALPING_API + path, {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "User-Agent": "ping.yu/0.1",
-      ...(init?.headers || {}),
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Globalping returned ${response.status}`);
-  }
-
+async function request(path:string, init?:RequestInit){
+  const response=await fetch(GLOBALPING_API+path,{...init,headers:{
+    Accept:"application/json","Content-Type":"application/json","User-Agent":"ping.yu/0.1","Accept-Encoding":"gzip",...(init?.headers||{})
+  }});
+  if(!response.ok) throw new Error("Globalping returned "+response.status);
   return response;
 }
 
-export async function createGlobalMeasurement(target: string) {
-  const response = await request("/measurements", {
-    method: "POST",
-    body: JSON.stringify({
-      type: "http",
-      target,
-      inProgressUpdates: true,
-      locations: GLOBAL_REGIONS.map(({ city }) => ({ city, limit: 1 })),
-      measurementOptions: {
-        request: { method: "GET" },
-      },
-    }),
-  });
-
-  const data = await response.json<{ id: string; status: GlobalMeasurement["status"] }>();
-  return data;
+export async function createGlobalMeasurement(targetUrl:string){
+  const target=new URL(targetUrl);
+  const protocol=target.protocol==="https:"?"HTTPS":"HTTP";
+  const requestOptions:Record<string,unknown>={method:"GET",path:target.pathname||"/"};
+  if(target.search) requestOptions.query=target.search.slice(1);
+  const body={
+    type:"http",
+    target:target.hostname,
+    timeout:20,
+    inProgressUpdates:true,
+    locations:GLOBAL_REGIONS.map(region=>({region,limit:1})),
+    measurementOptions:{
+      protocol,
+      port:target.port?Number(target.port):(protocol==="HTTPS"?443:80),
+      request:requestOptions,
+    },
+  };
+  const response=await request("/measurements",{method:"POST",body:JSON.stringify(body)});
+  return response.json<{id:string;probesCount:number}>();
 }
 
-export async function getGlobalMeasurement(id: string): Promise<GlobalMeasurement> {
-  const response = await request(`/measurements/${encodeURIComponent(id)}`);
+export async function getGlobalMeasurement(id:string):Promise<GlobalMeasurement>{
+  const response=await request("/measurements/"+encodeURIComponent(id));
   return response.json<GlobalMeasurement>();
 }

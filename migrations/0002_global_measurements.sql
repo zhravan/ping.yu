@@ -29,16 +29,19 @@ CREATE TABLE IF NOT EXISTS regional_results (
   first_byte_ms INTEGER,
   download_ms INTEGER,
   total_ms INTEGER,
+  tls_authorized INTEGER,
+  tls_protocol TEXT,
+  tls_cipher TEXT,
+  tls_expires_at TEXT,
+  tls_subject TEXT,
+  tls_issuer TEXT,
+  baseline_ms REAL,
+  anomaly INTEGER NOT NULL DEFAULT 0,
   checked_at TEXT NOT NULL,
   FOREIGN KEY (measurement_id) REFERENCES global_measurements(id) ON DELETE CASCADE,
   FOREIGN KEY (monitor_id) REFERENCES monitors(id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_global_measurements_monitor_created
-  ON global_measurements(monitor_id, created_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_regional_results_measurement
-  ON regional_results(measurement_id);
-
-CREATE INDEX IF NOT EXISTS idx_regional_results_monitor_checked
-  ON regional_results(monitor_id, checked_at DESC);
+CREATE INDEX IF NOT EXISTS idx_global_measurements_monitor_created ON global_measurements(monitor_id,created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_regional_results_measurement ON regional_results(measurement_id);
+CREATE INDEX IF NOT EXISTS idx_regional_results_monitor_checked ON regional_results(monitor_id,checked_at DESC);
