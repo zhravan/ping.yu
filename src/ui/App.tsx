@@ -247,7 +247,14 @@ export default function App() {
         </section>
       )}
 
-      <footer>ping.yu · minimal by design</footer>
+      <footer className="site-footer">
+        <span>ping.yu · minimal by design</span>
+        <span className="footer-links">
+          <a href="https://github.com/zhravan/ping.yu" target="_blank" rel="noreferrer">GitHub</a>
+          <span>·</span>
+          <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noreferrer">Apache 2.0</a>
+        </span>
+      </footer>
     </main>
   );
 }
