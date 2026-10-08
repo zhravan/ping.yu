@@ -2,7 +2,6 @@ import { FormEvent, useEffect, useState } from "react";
 import { authClient } from "./auth";
 import { AuthView } from "./components/AuthView";
 import { Header } from "./components/Header";
-import { Hero } from "./components/Hero";
 import { MonitorList } from "./components/MonitorList";
 import { MonitorDetail } from "./components/MonitorDetail";
 
@@ -114,7 +113,7 @@ export default function App() {
         <Header />
         <AuthView />
         <footer className="site-footer">
-          <span>ping.yu · minimal by design</span>
+          <span>ping.yu</span>
           <span className="footer-links">
             <a href="https://github.com/zhravan/ping.yu" target="_blank" rel="noreferrer">GitHub</a>
             <span>·</span>
@@ -129,13 +128,32 @@ export default function App() {
     <main className="shell">
       <Header user={session.user} />
 
-      <Hero url={url} adding={adding} onUrlChange={setUrl} onSubmit={addMonitor} />
+      <section className="monitor-toolbar">
+        <div>
+          <span className="section-label">Monitors</span>
+          <span className="monitor-count">{monitors.length}</span>
+        </div>
+        <form className="monitor-input compact" onSubmit={addMonitor}>
+          <span>+</span>
+          <input
+            aria-label="Monitor URL"
+            inputMode="url"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            value={url}
+            onChange={(event) => setUrl(event.target.value)}
+            placeholder="https://api.example.com/health"
+          />
+          <button type="submit" disabled={adding}>{adding ? "adding" : "add"}</button>
+        </form>
+      </section>
 
       {loading ? (
         <div className="empty"><strong>Loading.</strong></div>
       ) : !monitors.length ? (
         <div className="empty">
-          <strong>Nothing is watching.</strong>
+          <strong>No monitors yet.</strong>
           <span>Add an endpoint above.</span>
         </div>
       ) : (
@@ -146,7 +164,7 @@ export default function App() {
       )}
 
       <footer className="site-footer">
-        <span>ping.yu · minimal by design</span>
+        <span>ping.yu</span>
         <span className="footer-links">
           <a href="https://github.com/zhravan/ping.yu" target="_blank" rel="noreferrer">GitHub</a>
           <span>·</span>
