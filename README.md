@@ -4,9 +4,9 @@
 
 > Know when the internet gets weird.
 
-ping.yu is a small, open-source uptime monitor built for one question:
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https%3A%2F%2Fgithub.com%2Fzhravan%2Fping.yu)
 
-**Is my service healthy everywhere, or only from where I happen to be?**
+Deploy your own instance to Cloudflare in a few clicks. Cloudflare will clone the project into your GitHub account, provision the required Workers resources, and configure deployment for you.
 
 ## Why ping.yu?
 
@@ -35,7 +35,7 @@ ping.yu is under active development. The current focus is making the core monito
 - Cloudflare D1
 - Cloudflare Queues
 - React + Vite
-- Globalping for distributed measurements
+- Globalping
 - TypeScript
 
 ## Run locally
@@ -51,6 +51,22 @@ Check everything before opening a PR:
 npm run typecheck
 npm test
 npm run build
+```
+
+## Deploy
+
+### One click
+
+Use the **Deploy to Cloudflare** button above.
+
+The project is configured for Cloudflare resource provisioning, including its D1 database and Queue. Database migrations are applied as part of the deploy command.
+
+### CLI
+
+```bash
+npm install
+npx wrangler login
+npm run deploy
 ```
 
 ## Architecture
@@ -72,7 +88,7 @@ Cloudflare Worker
 
 Contributions are welcome.
 
-Start by reading the code and opening an issue for larger changes. For small fixes, a focused pull request is preferred.
+For larger changes, open an issue first. For small fixes, a focused pull request is preferred.
 
 Please keep changes:
 
@@ -84,4 +100,3 @@ Please keep changes:
 ## License
 
 Apache License 2.0 — see [LICENSE](./LICENSE).
-
