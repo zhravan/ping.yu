@@ -8,7 +8,7 @@ import type {
 } from "./types";
 
 const MONITOR_COLUMNS =
-  "id, user_id, url, name, interval_seconds, active, created_at";
+  "id, user_id, url, name, interval_seconds, active, created_at, next_check_at, last_checked_at";
 
 const MEASUREMENT_COLUMNS =
   "id, monitor_id, status, created_at, completed_at, external_id, error";
@@ -18,9 +18,7 @@ export async function getMonitor(
   monitorId: string,
 ): Promise<Monitor | null> {
   return env.DB.prepare(
-    "SELECT " +
-      MONITOR_COLUMNS +
-      " FROM monitors WHERE id = ?1",
+    "SELECT " + MONITOR_COLUMNS + " FROM monitors WHERE id = ?1",
   )
     .bind(monitorId)
     .first<Monitor>();
@@ -32,9 +30,7 @@ export async function getMonitorForUser(
   userId: string,
 ): Promise<Monitor | null> {
   return env.DB.prepare(
-    "SELECT " +
-      MONITOR_COLUMNS +
-      " FROM monitors WHERE id = ?1 AND user_id = ?2",
+    "SELECT " + MONITOR_COLUMNS + " FROM monitors WHERE id = ?1 AND user_id = ?2",
   )
     .bind(monitorId, userId)
     .first<Monitor>();
@@ -47,6 +43,7 @@ export async function listMonitorsForUser(
   const result = await env.DB.prepare(
     "SELECT " +
       "m.id, m.user_id, m.url, m.name, m.interval_seconds, m.active, m.created_at, " +
+      "m.next_check_at, m.last_checked_at, " +
       "COALESCE((" +
       "SELECT status FROM regional_results x " +
       "WHERE x.monitor_id = m.id " +
@@ -60,14 +57,15 @@ export async function listMonitorsForUser(
   return result.results;
 }
 
-export async function createMonitor(
+export async function createMonitorForUser(
   env: Env,
   monitor: Monitor,
-): Promise<void> {
-  await env.DB.prepare(
+): Promise<boolean> {
+  const result = await env.DB.prepare(
     "INSERT INTO monitors " +
-      "(id, user_id, url, name, interval_seconds, active, created_at) " +
-      "VALUES (?, ?, ?, ?, ?, ?, ?)",
+      "(id, user_id, url, name, interval_seconds, active, created_at, next_check_at, last_checked_at) " +
+      "SELECT ?, ?, ?, ?, ?, ?, ?, ?, ? " +
+      "WHERE (SELECT COUNT(*) FROM monitors WHERE user_id = ?) < 2",
   )
     .bind(
       monitor.id,
@@ -77,8 +75,13 @@ export async function createMonitor(
       monitor.interval_seconds,
       monitor.active,
       monitor.created_at,
+      monitor.next_check_at,
+      monitor.last_checked_at,
+      monitor.user_id,
     )
     .run();
+
+  return result.meta.changes > 0;
 }
 
 export async function deleteMonitorForUser(
@@ -102,9 +105,7 @@ export async function getLatestMeasurement(
   return env.DB.prepare(
     "SELECT " +
       MEASUREMENT_COLUMNS +
-      " FROM global_measurements " +
-      "WHERE monitor_id = ?1 " +
-      "ORDER BY created_at DESC LIMIT 1",
+      " FROM global_measurements WHERE monitor_id = ?1 ORDER BY created_at DESC LIMIT 1",
   )
     .bind(monitorId)
     .first<GlobalMeasurementRecord>();
@@ -142,8 +143,7 @@ export async function finishMeasurement(
 ): Promise<void> {
   await env.DB.prepare(
     "UPDATE global_measurements " +
-      "SET status = 'finished', completed_at = ?, error = NULL " +
-      "WHERE id = ?",
+      "SET status = 'finished', completed_at = ?, error = NULL WHERE id = ?",
   )
     .bind(completedAt, measurementId)
     .run();
@@ -167,32 +167,11 @@ export async function getRegionalHistory(
 export function prepareRegionalResultInsert(
   env: Env,
   values: [
-    string,
-    string,
-    string,
-    string,
-    string,
-    string,
-    number,
-    string,
-    string,
-    number | null,
-    string | null,
-    number | null,
-    number | null,
-    number | null,
-    number | null,
-    number | null,
-    number | null,
-    number | null,
-    string | null,
-    string | null,
-    string | null,
-    string | null,
-    string | null,
-    number | null,
-    number,
-    string,
+    string, string, string, string, string, string, number, string, string,
+    number | null, string | null, number | null, number | null, number | null,
+    number | null, number | null, number | null, number | null, string | null,
+    string | null, string | null, string | null, string | null, number | null,
+    number, string,
   ],
 ): D1PreparedStatement {
   return env.DB.prepare(
@@ -225,8 +204,7 @@ export async function getRegionalResults(
       "resolved_address, dns_ms, tcp_ms, tls_ms, first_byte_ms, " +
       "download_ms, total_ms, tls_authorized, tls_protocol, tls_cipher, " +
       "tls_expires_at, tls_subject, tls_issuer, baseline_ms, anomaly, checked_at " +
-      "FROM regional_results " +
-      "WHERE measurement_id = ?1 ORDER BY total_ms DESC",
+      "FROM regional_results WHERE measurement_id = ?1 ORDER BY total_ms DESC",
   )
     .bind(measurementId)
     .all<RegionalResult>();
@@ -264,12 +242,58 @@ export async function getPendingMeasurements(
   return result.results;
 }
 
-export async function getActiveMonitorIds(
+export async function getDueMonitors(
   env: Env,
-): Promise<Array<{ id: string }>> {
+  now: number,
+  limit = 500,
+): Promise<Array<{ id: string; interval_seconds: number; next_check_at: number }>> {
   const result = await env.DB.prepare(
-    "SELECT id FROM monitors WHERE active = 1",
-  ).all<{ id: string }>();
+    "SELECT id, interval_seconds, next_check_at FROM monitors " +
+      "WHERE active = 1 AND next_check_at <= ?1 " +
+      "ORDER BY next_check_at ASC LIMIT ?2",
+  )
+    .bind(now, limit)
+    .all<{ id: string; interval_seconds: number; next_check_at: number }>();
 
   return result.results;
+}
+
+export async function claimMonitorSchedule(
+  env: Env,
+  monitorId: string,
+  now: number,
+  nextCheckAt: number,
+): Promise<boolean> {
+  const result = await env.DB.prepare(
+    "UPDATE monitors SET next_check_at = ?1 " +
+      "WHERE id = ?2 AND active = 1 AND next_check_at <= ?3",
+  )
+    .bind(nextCheckAt, monitorId, now)
+    .run();
+
+  return result.meta.changes > 0;
+}
+
+export async function rescheduleMonitorNow(
+  env: Env,
+  monitorId: string,
+  now: number,
+): Promise<void> {
+  await env.DB.prepare(
+    "UPDATE monitors SET next_check_at = ?1 WHERE id = ?2 AND active = 1",
+  )
+    .bind(now, monitorId)
+    .run();
+}
+
+export async function markMonitorChecked(
+  env: Env,
+  monitorId: string,
+  checkedAt: number,
+): Promise<void> {
+  await env.DB.prepare(
+    "UPDATE monitors SET last_checked_at = ?1 WHERE id = ?2",
+  )
+    .bind(checkedAt, monitorId)
+    .run();
 }
