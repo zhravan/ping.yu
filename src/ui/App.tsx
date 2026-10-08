@@ -103,6 +103,10 @@ export default function App() {
   const average = values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
   const p95 = percentile(values, 0.95);
   const spread = values.length ? Math.max(...values) - Math.min(...values) : null;
+  const historyPoints = detail?.history.slice(0, 28).reverse() ?? [];
+  const historyMax = Math.max(...historyPoints.map((point) => point.avg_ms ?? 0), 0);
+  const historyScale = historyMax > 0 ? Math.ceil(historyMax / 100) * 100 : 100;
+  const formatTime = (value: string) => new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   const addMonitor = async (event: FormEvent) => {
     event.preventDefault();
@@ -183,10 +187,44 @@ export default function App() {
               <div className="metric-card"><span>Regions</span><strong>{detail.regions.length}</strong></div>
             </div>
 
-            <div className="history">
-              {detail.history.slice(0, 28).reverse().map((point, index) => (
-                <span key={index} style={{ height: Math.min(100, Math.max(8, (point.avg_ms || 1) / 3)) + "%" }} />
-              ))}
+            <div className="history-block">
+              <div className="history-head">
+                <div>
+                  <span className="history-label">Latency over time</span>
+                  <small>Average across regional probes</small>
+                </div>
+                <span className="history-range">{historyPoints.length} measurements</span>
+              </div>
+              <div className="history-chart">
+                <div className="history-yaxis" aria-hidden="true">
+                  <span>{ms(historyScale)}</span>
+                  <span>{ms(historyScale / 2)}</span>
+                  <span>0ms</span>
+                </div>
+                <div className="history-plot">
+                  <div className="history-grid"><i /><i /><i /></div>
+                  <div className="history-bars">
+                    {historyPoints.map((point, index) => {
+                      const value = point.avg_ms ?? 0;
+                      const height = value ? Math.max(8, Math.min(100, (value / historyScale) * 100)) : 3;
+                      return (
+                        <span
+                          key={index}
+                          className="history-bar"
+                          style={{ height: height + "%" }}
+                          title={formatTime(point.created_at) + " · " + ms(point.avg_ms)}
+                          aria-label={formatTime(point.created_at) + ", average latency " + ms(point.avg_ms)}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="history-xaxis">
+                    {historyPoints.length > 0 && <span>{formatTime(historyPoints[0].created_at)}</span>}
+                    {historyPoints.length > 2 && <span>{formatTime(historyPoints[Math.floor(historyPoints.length / 2)].created_at)}</span>}
+                    {historyPoints.length > 1 && <span>{formatTime(historyPoints[historyPoints.length - 1].created_at)}</span>}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="section-title"><span>Regional measurements</span><span>{detail.regions.length} measured</span></div>
