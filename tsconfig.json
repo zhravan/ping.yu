@@ -1,11 +1,13 @@
 {
   "compilerOptions": {
     "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "strict": true,
     "noEmit": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["@cloudflare/workers-types"]
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "include": [".wrangler/types/**/*.ts", "src/**/*.ts", "worker/**/*.ts", "tests/**/*.ts", "vite.config.ts"]
 }

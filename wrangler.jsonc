@@ -8,7 +8,35 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ping-yu",
+      "database_id": "2840ee4f-a505-479f-81e6-8b5e64eae8b8",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "PROBE_QUEUE",
+        "queue": "ping-yu-probes"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "ping-yu-probes",
+        "max_batch_size": 25,
+        "max_batch_timeout": 5,
+        "max_retries": 3
+      }
+    ]
+  },
   "triggers": {
     "crons": ["*/5 * * * *"]
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
   }
 }
