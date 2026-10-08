@@ -22,8 +22,46 @@ ping.yu is designed to show **where** it is slow or failing:
 - ASN / network visibility
 - Regional baselines and anomaly signals
 - Desktop + mobile monitoring UI
+- Per-user monitoring spaces
 
 Probe locations come from the measurement provider. ping.yu does not treat a Cloudflare Worker execution location as a fake "Bengaluru", "Tokyo", or "New York" probe.
+
+## Authentication
+
+ping.yu uses Better Auth with Cloudflare D1 for simple email/password accounts.
+
+Each monitor belongs to the authenticated user who created it. Monitor list, detail, create, and delete operations are scoped to the current session.
+
+### Local setup
+
+Create `.dev.vars` from the example:
+
+NaN
+NaN
+NaN
+
+Generate a high-entropy secret and put it in `BETTER_AUTH_SECRET`:
+
+NaN
+NaN
+NaN
+
+Then run:
+
+NaN
+NaN
+NaN
+NaN
+
+### Production
+
+Set the Better Auth secret as a Cloudflare secret:
+
+NaN
+NaN
+NaN
+
+Set `BETTER_AUTH_URL` to the public URL of the Worker deployment.
 
 ## Status
 
@@ -35,23 +73,24 @@ ping.yu is under active development. The current focus is making the core monito
 - Cloudflare D1
 - Cloudflare Queues
 - React + Vite
+- Better Auth
 - Globalping
 - TypeScript
 
 ## Run locally
 
-```bash
-npm install
-npm run dev
-```
+NaN
+NaN
+NaN
+NaN
 
 Check everything before opening a PR:
 
-```bash
-npm run typecheck
-npm test
-npm run build
-```
+NaN
+NaN
+NaN
+NaN
+NaN
 
 ## Deploy
 
@@ -61,28 +100,36 @@ Use the **Deploy to Cloudflare** button above.
 
 The project is configured for Cloudflare resource provisioning, including its D1 database and Queue. Database migrations are applied as part of the deploy command.
 
+After provisioning, configure `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` before using account features.
+
 ### CLI
 
-```bash
-npm install
-npx wrangler login
-npm run deploy
-```
+NaN
+NaN
+NaN
+NaN
+NaN
 
 ## Architecture
 
-```text
-Browser
-   │
-   ▼
-Cloudflare Worker
-   ├── D1
-   ├── Queue
-   └── Globalping
-         │
-         ▼
-   Regional measurements
-```
+NaN
+NaN
+NaN
+NaN
+NaN
+NaN
+NaN
+NaN
+NaN
+NaN
+NaN
+NaN
+NaN
+NaN
+NaN
+NaN
+NaN
+NaN
 
 ## Contributing
 
