@@ -1,5 +1,5 @@
 import {
-  createMonitor,
+  createMonitorForUser,
   deleteMonitorForUser,
   getMeasurementHistory,
   getMonitorForUser,
@@ -58,17 +58,27 @@ async function createMonitorFromRequest(
     return json({ error: "invalid url" }, 400);
   }
 
+  const now = Math.floor(Date.now() / 1000);
   const monitor: Monitor = {
     id: crypto.randomUUID(),
     user_id: userId,
     url: parsedUrl.toString(),
     name: input.name?.trim() || null,
-    interval_seconds: 300,
+    interval_seconds: 1800,
     active: 1,
     created_at: new Date().toISOString(),
+    next_check_at: now + 1800 + Math.floor(Math.random() * 60),
+    last_checked_at: null,
   };
 
-  await createMonitor(env, monitor);
+  const created = await createMonitorForUser(env, monitor);
+
+  if (!created) {
+    return json({
+      error: "monitor_limit_reached",
+      message: "Free accounts can monitor up to 2 domains. Delete a monitor to add another.",
+    }, 409);
+  }
 
   try {
     await env.PROBE_QUEUE.send(
