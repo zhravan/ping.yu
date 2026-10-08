@@ -7,7 +7,7 @@
     "build": "vite build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy && wrangler d1 migrations apply ping-yu --remote"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.7.0",
