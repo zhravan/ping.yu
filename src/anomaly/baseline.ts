@@ -10,6 +10,7 @@ export function updateBaseline(
   if (!baseline) return { meanMs: latencyMs, samples: 1 };
 
   const samples = baseline.samples + 1;
+
   return {
     meanMs: baseline.meanMs + (latencyMs - baseline.meanMs) / samples,
     samples,
