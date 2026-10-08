@@ -73,15 +73,27 @@ export default function App() {
 
   const loadDetail = async (id: string) => {
     const response = await fetch("/api/monitors/" + encodeURIComponent(id) + "/recent", { cache: "no-store" });
-    if (response.ok) setDetail(await response.json() as Detail);
+    if (!response.ok) return null;
+    return await response.json() as Detail;
   };
 
   useEffect(() => { void loadMonitors(); }, []);
   useEffect(() => {
     if (!selectedId) { setDetail(null); return; }
-    void loadDetail(selectedId);
-    const interval = window.setInterval(() => void loadDetail(selectedId), 3000);
-    return () => window.clearInterval(interval);
+    let cancelled = false;
+    const monitorId = selectedId;
+
+    const refreshDetail = async () => {
+      const next = await loadDetail(monitorId);
+      if (!cancelled && next) setDetail(next);
+    };
+
+    void refreshDetail();
+    const interval = window.setInterval(() => void refreshDetail(), 3000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
   }, [selectedId]);
 
   const values = useMemo(
