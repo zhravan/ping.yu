@@ -1,75 +1,87 @@
 # ping.yu
 
-Global uptime monitoring with network intelligence.
+**Global HTTP monitoring with network-level visibility.**
 
 > Know when the internet gets weird.
 
-ping.yu is aiming to be **Uptime Kuma +++++** without becoming a giant dashboard.
+ping.yu is a small, open-source uptime monitor built for one question:
 
-## What makes it different
+**Is my service healthy everywhere, or only from where I happen to be?**
 
-Uptime Kuma asks:
+## Why ping.yu?
 
-> Is this service up?
+Traditional uptime monitoring tells you that a service is down.
 
-ping.yu asks:
+ping.yu is designed to show **where** it is slow or failing:
 
-> Is this service up **for everyone**, and **where is it getting weird?**
+- HTTP(S) monitoring
+- Multiple endpoints
+- Global probe measurements
+- Regional latency
+- DNS, TCP, TLS, TTFB and total timing
+- ASN / network visibility
+- Regional baselines and anomaly signals
+- Desktop + mobile monitoring UI
 
-### Kuma layer
+Probe locations come from the measurement provider. ping.yu does not treat a Cloudflare Worker execution location as a fake "Bengaluru", "Tokyo", or "New York" probe.
 
-- HTTP(S) uptime and latency
-- multiple monitors / domains
-- asynchronous checks
-- retries and intervals
-- keyword / JSON assertions
-- TCP / DNS / ping-style checks
-- certificates
-- incidents and notifications
-- public status pages
+## Status
 
-### Plus layer
+ping.yu is under active development. The current focus is making the core monitoring experience reliable, simple, and easy to extend.
 
-- global probe measurements
-- regional uptime and latency
-- p50 / p95 / p99
-- DNS / TCP / TLS / TTFB / total timing
-- ASN and network visibility
-- regional baselines
-- anomaly detection
-- incident grouping
-- world map
+## Stack
 
-### Plus-plus layer
+- Cloudflare Workers
+- Cloudflare D1
+- Cloudflare Queues
+- React + Vite
+- Globalping for distributed measurements
+- TypeScript
 
-- compare networks, not just countries
-- detect India-only / Europe-only / ISP-specific failures
-- distinguish origin problems from network-routing problems
-- correlate regional failures into one incident
-- show historical regional baselines
-- turn an uptime alert into a diagnosis
-
-Global locations are based on actual measurement-provider probe data. ping.yu does not pretend a normal Cloudflare Worker invocation is a deterministic Bengaluru/Tokyo/New York probe.
-
-## Development
+## Run locally
 
 ```bash
 npm install
 npm run dev
+```
+
+Check everything before opening a PR:
+
+```bash
 npm run typecheck
 npm test
 npm run build
 ```
 
-## Deployment
+## Architecture
 
-Cloudflare Worker + D1 + Queues.
+```text
+Browser
+   │
+   ▼
+Cloudflare Worker
+   ├── D1
+   ├── Queue
+   └── Globalping
+         │
+         ▼
+   Regional measurements
+```
 
-The GitHub Actions deployment expects:
+## Contributing
 
-- `CLOUDFLARE_API_TOKEN`
-- `CLOUDFLARE_ACCOUNT_ID`
+Contributions are welcome.
+
+Start by reading the code and opening an issue for larger changes. For small fixes, a focused pull request is preferred.
+
+Please keep changes:
+
+- small and reviewable
+- tested
+- consistent with the existing UI and API
+- free of unnecessary dependencies
 
 ## License
 
-Apache License 2.0. See [LICENSE](./LICENSE).
+Apache License 2.0 — see [LICENSE](./LICENSE).
+
