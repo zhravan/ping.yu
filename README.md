@@ -1,50 +1,55 @@
 # ping.yu
 
-Minimal, edge-native Internet observability.
+Global uptime monitoring with network intelligence.
 
 > Know when the internet gets weird.
 
-ping.yu watches HTTP endpoints and turns edge observations into a simple signal: **up, slow, or weird**.
+ping.yu is aiming to be **Uptime Kuma +++++** without becoming a giant dashboard.
 
-## What it does
+## What makes it different
 
-- HTTP health checks
-- response latency
-- recent probe history
-- running latency baselines
-- regional edge metadata when available
-- anomaly detection primitives
-- minimal developer-first dashboard
+Uptime Kuma asks:
 
-## Architecture
+> Is this service up?
 
-```
-Cloudflare Cron
-     ↓
-Worker
-     ↓
-probe target
-     ↓
-D1
-     ↓
-baseline + anomaly logic
-     ↓
-React dashboard
+ping.yu asks:
 
-Queue support is wired into the Worker configuration for asynchronous probe execution.
-```
+> Is this service up **for everyone**, and **where is it getting weird?**
 
-The project intentionally does not claim deterministic geographic probes from a normal Worker invocation. A Cloudflare Worker executes on Cloudflare infrastructure, but the invocation location is not a user-selectable probe city. The stored `colo` field is therefore observational metadata, not a guaranteed Bengaluru/Tokyo/etc. probe label.
+### Kuma layer
 
-## Stack
+- HTTP(S) uptime and latency
+- multiple monitors / domains
+- asynchronous checks
+- retries and intervals
+- keyword / JSON assertions
+- TCP / DNS / ping-style checks
+- certificates
+- incidents and notifications
+- public status pages
 
-- TypeScript
-- Cloudflare Workers
-- Cloudflare D1
-- Cloudflare Queues
-- React
-- Vite
-- Wrangler
+### Plus layer
+
+- global probe measurements
+- regional uptime and latency
+- p50 / p95 / p99
+- DNS / TCP / TLS / TTFB / total timing
+- ASN and network visibility
+- regional baselines
+- anomaly detection
+- incident grouping
+- world map
+
+### Plus-plus layer
+
+- compare networks, not just countries
+- detect India-only / Europe-only / ISP-specific failures
+- distinguish origin problems from network-routing problems
+- correlate regional failures into one incident
+- show historical regional baselines
+- turn an uptime alert into a diagnosis
+
+Global locations are based on actual measurement-provider probe data. ping.yu does not pretend a normal Cloudflare Worker invocation is a deterministic Bengaluru/Tokyo/New York probe.
 
 ## Development
 
@@ -56,45 +61,15 @@ npm test
 npm run build
 ```
 
-Local D1 state is managed by Wrangler. Apply the migration with:
-
-```bash
-npx wrangler d1 migrations apply ping-yu --local
-```
-
 ## Deployment
 
-The repository is ready for Wrangler-based deployment.
+Cloudflare Worker + D1 + Queues.
 
-For the first queue-backed production deployment, the Cloudflare account must have its `workers.dev` subdomain initialized once from the Workers dashboard. Cloudflare's API currently rejects queue-consumer creation until that account-level setup has been completed.
-
-After that one-time account activation:
-
-```bash
-npm run deploy
-```
-
-The GitHub Actions workflow expects:
+The GitHub Actions deployment expects:
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-## Project shape
+## License
 
-```
-src/
-  anomaly/
-  domain/
-  probe/
-  ui/
-
-worker/
-  index.ts
-
-migrations/
-  0001_initial.sql
-
-tests/
-```
-
-The repository is being built in small, logically grouped commits rather than one large scaffold.
+Apache License 2.0. See [LICENSE](./LICENSE).
