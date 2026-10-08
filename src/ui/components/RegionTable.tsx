@@ -11,6 +11,16 @@ const ms = (value: number | null) => value == null ? "—" : Math.round(value) +
 export function RegionTable({ regions }: Props) {
   return (
     <div className="region-desktop">
+      <div className="region-header" aria-hidden="true">
+        <span>Region</span>
+        <span>Status</span>
+        <span>DNS</span>
+        <span>TCP</span>
+        <span>TLS</span>
+        <span>First byte</span>
+        <span>Total</span>
+        <span>Anomaly</span>
+      </div>
       {regions.map((region, index) => (
         <div className="region-row" key={(region.region || "unknown") + "-" + (region.city || "unknown") + "-" + index}>
           <div className="region-name">
