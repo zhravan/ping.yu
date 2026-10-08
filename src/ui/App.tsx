@@ -81,7 +81,10 @@ export default function App() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ url: target }),
       });
-      if (!response.ok) throw new Error("Could not add monitor.");
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null) as { message?: string } | null;
+        throw new Error(payload?.message || "Could not add monitor.");
+      }
       const created = await response.json() as { monitor: Monitor };
       setUrl("");
       setSelectedId(created.monitor.id);
@@ -131,22 +134,26 @@ export default function App() {
       <section className="monitor-toolbar">
         <div>
           <span className="section-label">Monitors</span>
-          <span className="monitor-count">{monitors.length}</span>
+          <span className="monitor-count">{monitors.length}/2</span>
         </div>
-        <form className="monitor-input compact" onSubmit={addMonitor}>
-          <span>+</span>
-          <input
-            aria-label="Monitor URL"
-            inputMode="url"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            value={url}
-            onChange={(event) => setUrl(event.target.value)}
-            placeholder="https://api.example.com/health"
-          />
-          <button type="submit" disabled={adding}>{adding ? "adding" : "add"}</button>
-        </form>
+        {monitors.length < 2 ? (
+          <form className="monitor-input compact" onSubmit={addMonitor}>
+            <span>+</span>
+            <input
+              aria-label="Monitor URL"
+              inputMode="url"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              value={url}
+              onChange={(event) => setUrl(event.target.value)}
+              placeholder="https://api.example.com/health"
+            />
+            <button type="submit" disabled={adding}>{adding ? "adding" : "add"}</button>
+          </form>
+        ) : (
+          <div className="monitor-limit">Free plan limit reached · remove a monitor to add another.</div>
+        )}
       </section>
 
       {loading ? (
