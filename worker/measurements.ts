@@ -1,7 +1,10 @@
 import {
   createMeasurement,
   finishMeasurement,
-  getActiveMonitorIds,
+  getDueMonitors,
+  claimMonitorSchedule,
+  rescheduleMonitorNow,
+  markMonitorChecked,
   getLatestMeasurement,
   getPendingMeasurements,
   getRegionalHistory,
@@ -179,14 +182,37 @@ export async function syncPendingMeasurements(env: Env): Promise<void> {
   }
 }
 
-export async function queueActiveMonitors(env: Env): Promise<void> {
-  const monitors = await getActiveMonitorIds(env);
+const SCHEDULER_BATCH_SIZE = 500;
+
+export async function queueDueMonitors(env: Env): Promise<void> {
+  const now = Math.floor(Date.now() / 1000);
+  const monitors = await getDueMonitors(env, now, SCHEDULER_BATCH_SIZE);
 
   for (const monitor of monitors) {
-    await env.PROBE_QUEUE.send(
-      { monitorId: monitor.id },
-      { contentType: "json" },
+    // Claim the due monitor before enqueueing so overlapping cron invocations
+    // cannot enqueue it twice. A failed send makes it due again immediately.
+    const nextCheckAt =
+      now + monitor.interval_seconds + Math.floor(Math.random() * 60);
+    const claimed = await claimMonitorSchedule(
+      env,
+      monitor.id,
+      now,
+      nextCheckAt,
     );
+
+    if (!claimed) {
+      continue;
+    }
+
+    try {
+      await env.PROBE_QUEUE.send(
+        { monitorId: monitor.id },
+        { contentType: "json" },
+      );
+    } catch (error) {
+      console.error("Could not enqueue monitor", monitor.id, error);
+      await rescheduleMonitorNow(env, monitor.id, now);
+    }
   }
 }
 
@@ -202,6 +228,7 @@ export async function processProbe(
 
   try {
     await startMeasurement(env, monitor);
+    await markMonitorChecked(env, monitorId, Math.floor(Date.now() / 1000));
     return "ack";
   } catch (error) {
     console.error(error);
