@@ -67,9 +67,11 @@ export async function syncMeasurement(
     "id" | "monitor_id" | "external_id"
   >,
 ): Promise<void> {
-  const measurement = await getGlobalMeasurement(
-    measurementRecord.external_id,
-  );
+  if (!measurementRecord.external_id) {
+    return;
+  }
+
+  const measurement = await getGlobalMeasurement(measurementRecord.external_id);
 
   if (measurement.status === "in-progress") {
     return;
