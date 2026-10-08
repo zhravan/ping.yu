@@ -2,10 +2,13 @@ export interface Env {
   DB: D1Database;
   PROBE_QUEUE: Queue<{ monitorId: string }>;
   ASSETS: Fetcher;
+  BETTER_AUTH_SECRET: string;
+  BETTER_AUTH_URL: string;
 }
 
 export interface Monitor {
   id: string;
+  user_id: string | null;
   url: string;
   name: string | null;
   interval_seconds: number;

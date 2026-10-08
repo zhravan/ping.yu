@@ -8,7 +8,7 @@ import type {
 } from "./types";
 
 const MONITOR_COLUMNS =
-  "id, url, name, interval_seconds, active, created_at";
+  "id, user_id, url, name, interval_seconds, active, created_at";
 
 const MEASUREMENT_COLUMNS =
   "id, monitor_id, status, created_at, completed_at, external_id, error";
@@ -26,17 +26,36 @@ export async function getMonitor(
     .first<Monitor>();
 }
 
-export async function listMonitors(env: Env): Promise<MonitorWithStatus[]> {
+export async function getMonitorForUser(
+  env: Env,
+  monitorId: string,
+  userId: string,
+): Promise<Monitor | null> {
+  return env.DB.prepare(
+    "SELECT " +
+      MONITOR_COLUMNS +
+      " FROM monitors WHERE id = ?1 AND user_id = ?2",
+  )
+    .bind(monitorId, userId)
+    .first<Monitor>();
+}
+
+export async function listMonitorsForUser(
+  env: Env,
+  userId: string,
+): Promise<MonitorWithStatus[]> {
   const result = await env.DB.prepare(
     "SELECT " +
-      "m.id, m.url, m.name, m.interval_seconds, m.active, m.created_at, " +
+      "m.id, m.user_id, m.url, m.name, m.interval_seconds, m.active, m.created_at, " +
       "COALESCE((" +
       "SELECT status FROM regional_results x " +
       "WHERE x.monitor_id = m.id " +
       "ORDER BY x.checked_at DESC LIMIT 1" +
       "), 'pending') AS status " +
-      "FROM monitors m ORDER BY m.created_at DESC",
-  ).all<MonitorWithStatus>();
+      "FROM monitors m WHERE m.user_id = ?1 ORDER BY m.created_at DESC",
+  )
+    .bind(userId)
+    .all<MonitorWithStatus>();
 
   return result.results;
 }
@@ -47,11 +66,12 @@ export async function createMonitor(
 ): Promise<void> {
   await env.DB.prepare(
     "INSERT INTO monitors " +
-      "(id, url, name, interval_seconds, active, created_at) " +
-      "VALUES (?, ?, ?, ?, ?, ?)",
+      "(id, user_id, url, name, interval_seconds, active, created_at) " +
+      "VALUES (?, ?, ?, ?, ?, ?, ?)",
   )
     .bind(
       monitor.id,
+      monitor.user_id,
       monitor.url,
       monitor.name,
       monitor.interval_seconds,
@@ -61,13 +81,18 @@ export async function createMonitor(
     .run();
 }
 
-export async function deleteMonitor(
+export async function deleteMonitorForUser(
   env: Env,
   monitorId: string,
-): Promise<void> {
-  await env.DB.prepare("DELETE FROM monitors WHERE id = ?1")
-    .bind(monitorId)
+  userId: string,
+): Promise<boolean> {
+  const result = await env.DB.prepare(
+    "DELETE FROM monitors WHERE id = ?1 AND user_id = ?2",
+  )
+    .bind(monitorId, userId)
     .run();
+
+  return result.meta.changes > 0;
 }
 
 export async function getLatestMeasurement(

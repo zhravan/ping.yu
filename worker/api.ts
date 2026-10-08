@@ -1,11 +1,12 @@
 import {
   createMonitor,
-  deleteMonitor,
+  deleteMonitorForUser,
   getMeasurementHistory,
-  getMonitor,
+  getMonitorForUser,
   getRegionalResults,
-  listMonitors,
+  listMonitorsForUser,
 } from "./db";
+import { getSession, createAuth } from "./auth";
 import { syncLatestMeasurement } from "./measurements";
 import type { Env, Monitor } from "./types";
 
@@ -44,6 +45,7 @@ function validateMonitorUrl(value: unknown): URL | null {
 async function createMonitorFromRequest(
   request: Request,
   env: Env,
+  userId: string,
 ): Promise<Response> {
   const input = await request.json<{ url?: string; name?: string }>();
   const parsedUrl = validateMonitorUrl(input.url);
@@ -58,6 +60,7 @@ async function createMonitorFromRequest(
 
   const monitor: Monitor = {
     id: crypto.randomUUID(),
+    user_id: userId,
     url: parsedUrl.toString(),
     name: input.name?.trim() || null,
     interval_seconds: 300,
@@ -73,7 +76,7 @@ async function createMonitorFromRequest(
       { contentType: "json" },
     );
   } catch (error) {
-    await deleteMonitor(env, monitor.id);
+    await deleteMonitorForUser(env, monitor.id, userId);
 
     return json(
       {
@@ -90,8 +93,9 @@ async function createMonitorFromRequest(
 async function getMonitorDetail(
   env: Env,
   monitorId: string,
+  userId: string,
 ): Promise<Response> {
-  const monitor = await getMonitor(env, monitorId);
+  const monitor = await getMonitorForUser(env, monitorId, userId);
 
   if (!monitor) {
     return json({ error: "monitor not found" }, 404);
@@ -122,31 +126,55 @@ export async function handleApi(
     return json({ ok: true, service: "ping.yu" });
   }
 
-  if (url.pathname === "/api/monitors") {
-    if (request.method === "GET") {
-      return json(await listMonitors(env));
-    }
-
-    if (request.method === "POST") {
-      return createMonitorFromRequest(request, env);
-    }
+  if (url.pathname.startsWith("/api/auth/")) {
+    return createAuth(env).handler(request);
   }
 
-  const recentMatch = url.pathname.match(
-    /^\/api\/monitors\/([^/]+)\/recent$/,
-  );
+  if (
+    url.pathname === "/api/monitors" ||
+    /^\/api\/monitors\/[^/]+(?:\/recent)?$/.test(url.pathname)
+  ) {
+    const session = await getSession(request, env);
 
-  if (recentMatch && request.method === "GET") {
-    return getMonitorDetail(env, recentMatch[1]);
-  }
+    if (!session) {
+      return json({ error: "authentication required" }, 401);
+    }
 
-  const deleteMatch = url.pathname.match(
-    /^\/api\/monitors\/([^/]+)$/,
-  );
+    const userId = session.user.id;
 
-  if (deleteMatch && request.method === "DELETE") {
-    await deleteMonitor(env, deleteMatch[1]);
-    return new Response(null, { status: 204 });
+    if (url.pathname === "/api/monitors") {
+      if (request.method === "GET") {
+        return json(await listMonitorsForUser(env, userId));
+      }
+
+      if (request.method === "POST") {
+        return createMonitorFromRequest(request, env, userId);
+      }
+    }
+
+    const recentMatch = url.pathname.match(
+      /^\/api\/monitors\/([^/]+)\/recent$/,
+    );
+
+    if (recentMatch && request.method === "GET") {
+      return getMonitorDetail(env, recentMatch[1], userId);
+    }
+
+    const deleteMatch = url.pathname.match(
+      /^\/api\/monitors\/([^/]+)$/,
+    );
+
+    if (deleteMatch && request.method === "DELETE") {
+      const deleted = await deleteMonitorForUser(
+        env,
+        deleteMatch[1],
+        userId,
+      );
+
+      return deleted
+        ? new Response(null, { status: 204 })
+        : json({ error: "monitor not found" }, 404);
+    }
   }
 
   return null;

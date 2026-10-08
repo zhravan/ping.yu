@@ -6,7 +6,7 @@
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https%3A%2F%2Fgithub.com%2Fzhravan%2Fping.yu)
 
-Deploy your own instance to Cloudflare in a few clicks. Cloudflare will clone the project into your GitHub account, provision the required Workers resources, and configure deployment for you.
+Deploy your own instance to Cloudflare in a few clicks.
 
 ## Why ping.yu?
 
@@ -15,19 +15,16 @@ Traditional uptime monitoring tells you that a service is down.
 ping.yu is designed to show **where** it is slow or failing:
 
 - HTTP(S) monitoring
-- Multiple endpoints
+- Multiple endpoints per account
 - Global probe measurements
 - Regional latency
 - DNS, TCP, TLS, TTFB and total timing
 - ASN / network visibility
 - Regional baselines and anomaly signals
-- Desktop + mobile monitoring UI
+- Private, per-user monitoring spaces
+- Responsive monitoring UI
 
-Probe locations come from the measurement provider. ping.yu does not treat a Cloudflare Worker execution location as a fake "Bengaluru", "Tokyo", or "New York" probe.
-
-## Status
-
-ping.yu is under active development. The current focus is making the core monitoring experience reliable, simple, and easy to extend.
+Probe locations come from the measurement provider. ping.yu does not treat a Cloudflare Worker execution location as a real probe location.
 
 ## Stack
 
@@ -36,16 +33,20 @@ ping.yu is under active development. The current focus is making the core monito
 - Cloudflare Queues
 - React + Vite
 - Globalping
+- Better Auth
 - TypeScript
 
 ## Run locally
 
 ```bash
 npm install
+cp .dev.vars.example .dev.vars
 npm run dev
 ```
 
-Check everything before opening a PR:
+For local authentication, set `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` in `.dev.vars`.
+
+Before opening a PR:
 
 ```bash
 npm run typecheck
@@ -59,8 +60,6 @@ npm run build
 
 Use the **Deploy to Cloudflare** button above.
 
-The project is configured for Cloudflare resource provisioning, including its D1 database and Queue. Database migrations are applied as part of the deploy command.
-
 ### CLI
 
 ```bash
@@ -69,6 +68,8 @@ npx wrangler login
 npm run deploy
 ```
 
+For production authentication, configure `BETTER_AUTH_SECRET` as a Cloudflare Worker secret and set `BETTER_AUTH_URL` to the deployed URL.
+
 ## Architecture
 
 ```text
@@ -76,13 +77,22 @@ Browser
    │
    ▼
 Cloudflare Worker
+   ├── Better Auth
    ├── D1
-   ├── Queue
-   └── Globalping
+   └── Queue
+         │
+         ▼
+   Globalping
          │
          ▼
    Regional measurements
 ```
+
+## Status
+
+ping.yu is under active development.
+
+The current focus is building a reliable monitoring core that can evolve into broader observability, including private-service monitoring and dedicated monitoring agents.
 
 ## Contributing
 
@@ -90,12 +100,7 @@ Contributions are welcome.
 
 For larger changes, open an issue first. For small fixes, a focused pull request is preferred.
 
-Please keep changes:
-
-- small and reviewable
-- tested
-- consistent with the existing UI and API
-- free of unnecessary dependencies
+Keep changes small, tested, reviewable, and consistent with the existing architecture.
 
 ## License
 

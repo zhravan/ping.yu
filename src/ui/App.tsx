@@ -1,4 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
+import { authClient } from "./auth";
+import { AuthView } from "./components/AuthView";
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
 import { MonitorList } from "./components/MonitorList";
@@ -29,6 +31,7 @@ async function fetchDetail(id: string): Promise<Detail | null> {
 }
 
 export default function App() {
+  const { data: session, isPending: authLoading } = authClient.useSession();
   const [monitors, setMonitors] = useState<Monitor[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -46,7 +49,9 @@ export default function App() {
     }
   };
 
-  useEffect(() => { void loadMonitors(); }, []);
+  useEffect(() => {
+    if (session) void loadMonitors();
+  }, [session]);
 
   useEffect(() => {
     if (!selectedId) { setDetail(null); return; }
@@ -94,9 +99,36 @@ export default function App() {
     await loadMonitors();
   };
 
+  if (authLoading) {
+    return (
+      <main className="shell">
+        <Header />
+        <div className="empty auth-loading"><strong>Loading.</strong></div>
+      </main>
+    );
+  }
+
+  if (!session) {
+    return (
+      <main className="shell">
+        <Header />
+        <AuthView />
+        <footer className="site-footer">
+          <span>ping.yu · minimal by design</span>
+          <span className="footer-links">
+            <a href="https://github.com/zhravan/ping.yu" target="_blank" rel="noreferrer">GitHub</a>
+            <span>·</span>
+            <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noreferrer">Apache 2.0</a>
+          </span>
+        </footer>
+      </main>
+    );
+  }
+
   return (
     <main className="shell">
-      <Header />
+      <Header user={session.user} />
+
       <Hero url={url} adding={adding} onUrlChange={setUrl} onSubmit={addMonitor} />
 
       {loading ? (
