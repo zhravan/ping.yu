@@ -34,3 +34,26 @@ footer{padding:42px 0 70px;color:#777;font-size:12px}
 }
 
 .monitor-input input::placeholder{color:#777;opacity:1}.monitor-input input:focus{box-shadow:none}.flag{display:inline-flex;align-items:center;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text-2);border-radius:4px;padding:3px 6px}
+
+.history-block{margin:28px 0 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:16px 0 12px}
+.history-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px}
+.history-label{display:block;color:var(--text-2);font-size:10px;text-transform:uppercase;letter-spacing:.09em}
+.history-head small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+.history-range{color:var(--faint);font-size:10px;white-space:nowrap}
+.history-chart{display:grid;grid-template-columns:48px 1fr;gap:10px;min-width:0}
+.history-yaxis{display:flex;flex-direction:column;justify-content:space-between;height:132px;padding-bottom:20px;color:var(--faint);font-size:9px;text-align:right}
+.history-plot{position:relative;height:154px;min-width:0}
+.history-grid{position:absolute;inset:0 0 20px;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
+.history-grid i{display:block;border-top:1px solid var(--border);height:0}
+.history-bars{position:absolute;inset:0 0 20px;display:flex;align-items:flex-end;gap:4px;padding:0 2px}
+.history-bar{display:block;flex:1;min-width:3px;max-width:18px;background:#b8b8b8;border-radius:2px 2px 0 0;opacity:.8;transition:opacity .15s,background .15s}
+.history-bar:hover{opacity:1;background:#f5f5f5}
+.history-xaxis{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;color:var(--faint);font-size:9px}
+@media(max-width:760px){
+  .history-block{margin-top:22px}
+  .history-chart{grid-template-columns:42px 1fr;gap:8px}
+  .history-plot{height:142px}
+  .history-yaxis{height:122px;font-size:8px}
+  .history-bars{gap:3px}
+  .history-bar{max-width:none}
+}
