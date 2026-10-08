@@ -22,6 +22,7 @@ ping.yu is designed to show **where** it is slow or failing:
 - ASN / network visibility
 - Regional baselines and anomaly signals
 - Private, per-user monitoring spaces
+- Free tier: 2 monitors per account, checked every 30 minutes
 - Responsive monitoring UI
 
 Probe locations come from the measurement provider. ping.yu does not treat a Cloudflare Worker execution location as a real probe location.

@@ -1,7 +1,7 @@
 import { handleApi } from "./api";
 import {
   processProbe,
-  queueActiveMonitors,
+  queueDueMonitors,
   syncPendingMeasurements,
 } from "./measurements";
 import type { Env } from "./types";
@@ -18,7 +18,7 @@ export default {
     env: Env,
   ): Promise<void> {
     await syncPendingMeasurements(env);
-    await queueActiveMonitors(env);
+    await queueDueMonitors(env);
   },
 
   async queue(

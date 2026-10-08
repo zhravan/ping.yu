@@ -14,6 +14,8 @@ export interface Monitor {
   interval_seconds: number;
   active: number;
   created_at: string;
+  next_check_at: number;
+  last_checked_at: number | null;
 }
 
 export interface MonitorWithStatus extends Monitor {
