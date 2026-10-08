@@ -12,7 +12,6 @@
     {
       "binding": "DB",
       "database_name": "ping-yu",
-      "database_id": "2840ee4f-a505-479f-81e6-8b5e64eae8b8",
       "migrations_dir": "migrations"
     }
   ],
