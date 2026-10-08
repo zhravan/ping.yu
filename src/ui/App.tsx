@@ -64,8 +64,10 @@ export default function App() {
     const response = await fetch("/api/monitors", { cache: "no-store" });
     const data = await response.json() as Monitor[];
     setMonitors(data);
-    if (!selectedId && data[0]) setSelectedId(data[0].id);
-    if (selectedId && !data.some((monitor) => monitor.id === selectedId)) setSelectedId(data[0]?.id ?? null);
+    setSelectedId((current) => {
+      if (current && data.some((monitor) => monitor.id === current)) return current;
+      return data[0]?.id ?? null;
+    });
     setLoading(false);
   };
 
