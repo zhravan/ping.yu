@@ -26,14 +26,15 @@
     "consumers": [
       {
         "queue": "ping-yu-probes",
-        "max_batch_size": 25,
+        "max_batch_size": 5,
         "max_batch_timeout": 5,
-        "max_retries": 3
+        "max_retries": 3,
+        "max_concurrency": 3
       }
     ]
   },
   "triggers": {
-    "crons": ["*/5 * * * *"]
+    "crons": ["* * * * *"]
   },
   "observability": {
     "enabled": true,
