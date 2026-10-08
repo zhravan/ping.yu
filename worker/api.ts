@@ -133,7 +133,7 @@ export async function handleApi(
   }
 
   const recentMatch = url.pathname.match(
-    /^\\/api\\/monitors\\/([^/]+)\\/recent$/,
+    /^\/api\/monitors\/([^/]+)\/recent$/,
   );
 
   if (recentMatch && request.method === "GET") {
@@ -141,7 +141,7 @@ export async function handleApi(
   }
 
   const deleteMatch = url.pathname.match(
-    /^\\/api\\/monitors\\/([^/]+)$/,
+    /^\/api\/monitors\/([^/]+)$/,
   );
 
   if (deleteMatch && request.method === "DELETE") {
