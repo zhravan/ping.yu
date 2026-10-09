@@ -1,0 +1,19 @@
+.certificate-panel{margin-top:28px;padding:18px 0 14px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);min-width:0}
+.certificate-panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.certificate-eyebrow{font-size:9px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin:0 0 7px}
+.certificate-panel h3{font-size:17px;font-weight:550;letter-spacing:-.02em;margin:0}
+.certificate-subtitle{font-size:10px;color:var(--muted);margin:6px 0 0;line-height:1.5}
+.certificate-badge{display:inline-flex;align-items:center;white-space:nowrap;border:1px solid var(--border-strong);border-radius:4px;padding:5px 7px;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
+.certificate-badge.healthy{color:var(--green);border-color:#285b40}.certificate-badge.warning{color:var(--amber);border-color:#66502a}.certificate-badge.critical{color:var(--red);border-color:#673333}.certificate-badge.unknown{color:var(--muted)}
+.certificate-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:18px 0}
+.certificate-summary>div{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:11px;min-width:0}
+.certificate-summary span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.07em}
+.certificate-summary strong{display:block;margin-top:7px;font-size:13px;font-weight:550;overflow-wrap:anywhere}
+.certificate-table{overflow-x:auto;border-top:1px solid var(--border)}
+.certificate-row{display:grid;grid-template-columns:minmax(100px,1.1fr) 82px 100px minmax(80px,1fr);gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:10px;min-width:430px}
+.certificate-header{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.06em}
+.certificate-region strong{display:block;font-size:10px;font-weight:550}.certificate-region small{display:block;color:var(--muted);font-size:9px;margin-top:4px}
+.certificate-issuer{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2)}
+.healthy-text{color:var(--green)}.warning-text{color:var(--amber)}.critical-text{color:var(--red)}
+.certificate-empty,.certificate-footnote{font-size:10px;line-height:1.6;color:var(--muted);margin:16px 0 0}
+@media(max-width:760px){.certificate-panel{margin-top:24px}.certificate-summary{grid-template-columns:1fr 1fr}.certificate-summary>div:last-child{grid-column:span 2}.certificate-panel-head{gap:10px}.certificate-panel h3{font-size:15px}.certificate-row{gap:8px}}
