@@ -12,6 +12,8 @@ type Detail = {
   regions: {
     region: string | null; country: string | null; city: string | null; network: string | null;
     status: string; dns_ms: number | null; tcp_ms: number | null; tls_ms: number | null;
+    tls_authorized: number | null; tls_protocol: string | null; tls_expires_at: string | null;
+    tls_subject: string | null; tls_issuer: string | null;
     first_byte_ms: number | null; total_ms: number | null; anomaly: number;
   }[];
   history: { created_at: string; avg_ms: number | null }[];

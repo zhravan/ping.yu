@@ -19,11 +19,14 @@ ping.yu is designed to show **where** it is slow or failing:
 - Global probe measurements
 - Regional latency
 - DNS, TCP, TLS, TTFB and total timing
+- TLS certificate expiry and trust visibility for HTTPS monitors
 - ASN / network visibility
 - Regional baselines and anomaly signals
 - Private, per-user monitoring spaces
 - Free tier: 2 monitors per account, checked every 30 minutes
 - Responsive monitoring UI
+
+TLS certificate health uses certificate metadata reported by the latest regional probes. The dashboard highlights trust validation and the earliest reported expiry; it does not yet send expiry reminders or perform certificate renewal.
 
 Probe locations come from the measurement provider. ping.yu does not treat a Cloudflare Worker execution location as a real probe location.
 

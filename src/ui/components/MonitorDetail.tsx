@@ -1,10 +1,13 @@
 import { LatencyHistory } from "./LatencyHistory";
 import { RegionCard } from "./RegionCard";
 import { RegionTable } from "./RegionTable";
+import { CertificateHealth } from "./CertificateHealth";
 
 type Region = {
   region: string | null; country: string | null; city: string | null; network: string | null;
   status: string; dns_ms: number | null; tcp_ms: number | null; tls_ms: number | null;
+  tls_authorized: number | null; tls_protocol: string | null; tls_expires_at: string | null;
+  tls_subject: string | null; tls_issuer: string | null;
   first_byte_ms: number | null; total_ms: number | null; anomaly: number;
 };
 
@@ -57,6 +60,8 @@ export function MonitorDetail({ detail, onRemove }: Props) {
       </div>
 
       <LatencyHistory points={historyPoints} />
+
+      <CertificateHealth url={detail.monitor.url} regions={detail.regions} />
 
       <div className="section-title">
         <span>Regional measurements</span>
